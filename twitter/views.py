@@ -22,6 +22,7 @@ def index(request):
 	printVal += "<div style='font-weight: 200; font-family: sans-serif; background-color: white; top: 0; left: 0; position: absolute; width: 100%; height: 100%'>"
 	printVal += "<h1 style='font-weight: 200; font-family: sans-serif; text-align: center;'>Sentiment Analysis of Environmental Twitter Activity</h1>"
 	printVal += "<table style='margin-left: auto; margin-right: auto; color: #031634; border-collapse: collapse;'>";
+	print(resp)
 	for obj in jsonObj['statuses']:
 		printVal += "<tr><td style='border: 1px solid #031634; padding: 10px;'>" + str(counter) + "</td><td style='border: 1px solid #031634; padding: 10px;'>" + obj['user']['name'].encode('utf-8') + "</td><td style='border: 1px solid #031634; padding: 10px;'>" + obj['full_text'].encode('utf-8') + "</td></tr>"
 		# printVal += "<br />"
@@ -33,7 +34,26 @@ def index(request):
 		# stringVal += '\n'
 		counter += 1
 
+	print(str(jsonObj['search_metadata']))
+
+	while ('next_results' in jsonObj['search_metadata'] and counter < 1000):
+		resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonObj['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
+
+		stringVal = content.decode("utf-8")
+		jsonObj = json.loads(stringVal)
+
+		for obj in jsonObj['statuses']:
+			printVal += "<tr><td style='border: 1px solid #031634; padding: 10px;'>" + str(counter) + "</td><td style='border: 1px solid #031634; padding: 10px;'>" + obj['user']['name'].encode('utf-8') + "</td><td style='border: 1px solid #031634; padding: 10px;'>" + obj['full_text'].encode('utf-8') + "</td></tr>"
+			# printVal += "<br />"
+			# prevDate = currDate
+			# currDate = parse(obj['created_at'])
+			# print(prevDate)
+			# print(currDate)
+			# print(relativedelta(prevDate, currDate))
+			# stringVal += '\n'
+			counter += 1
+
 	printVal += "</table></div>"
-	# print(jsonObj['search_metadata'])
+	print(str(jsonObj['search_metadata']))
 	# print("count: " + str(counter))
 	return HttpResponse(printVal)
