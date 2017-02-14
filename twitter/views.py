@@ -13,6 +13,7 @@ from django.http import HttpResponse
 def index(request):
 	# -you main code starts here-
 
+	nltk.data.path.append('./nltk_dir')
 
 	labeled_pros_cons = []
 	for word in pros_cons.words('IntegratedPros.txt'):
@@ -54,7 +55,7 @@ def index(request):
 		pos = nltk.pos_tag(tokens)
 		words_to_analyze = []
 		for (word, tag) in pos:
-			if "JJ" in tag or "RB" in tag:
+			if ("JJ" in tag or "RB" in tag) and (not("@" in tag)):
 				words_to_analyze.append(word)
 		for word in words_to_analyze:
 			classification = classifier.classify({ 'word': word })
