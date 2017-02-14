@@ -1,11 +1,10 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-
 #------------------------------------------------------------------------------
 # Imports
 #   -all library/module imports go here-
 import oauth2
 import json
+from django.shortcuts import render
+from django.http import HttpResponse
 
 def index(request):
 	# -you main code starts here-
@@ -17,20 +16,21 @@ def index(request):
 	stringVal = content.decode("utf-8")
 	jsonObj = json.loads(stringVal)
 
-	counter = 0;
+	counter = 1;
 	currDate = 0;
-	printVal = "";
+	printVal = "<div style='font-family: sans-serif; background-color: white; top: 0; left: 0; position: absolute; width: 100%; height: 100%'><table style='left: auto; color: #031634; border-collapse: collapse;'>";
 	for obj in jsonObj['statuses']:
-		printVal += obj['user']['name'].encode('utf-8') + ":" + obj['full_text'].encode('utf-8')
-		printVal += "<br />"
+		printVal += "<tr><td style='border: 1px solid #031634; padding: 10px;'>" + str(counter) + "</td><td style='border: 1px solid #031634; padding: 10px;'>" + obj['user']['name'].encode('utf-8') + "</td><td style='border: 1px solid #031634; padding: 10px;'>" + obj['full_text'].encode('utf-8') + "</td></tr>"
+		# printVal += "<br />"
 		# prevDate = currDate
 		# currDate = parse(obj['created_at'])
 		# print(prevDate)
 		# print(currDate)
 		# print(relativedelta(prevDate, currDate))
 		# stringVal += '\n'
-		# counter += 1
+		counter += 1
 
+	printVal += "</table></div>"
 	# print(jsonObj['search_metadata'])
 	# print("count: " + str(counter))
 	return HttpResponse(printVal)
