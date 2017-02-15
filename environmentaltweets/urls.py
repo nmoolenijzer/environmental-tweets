@@ -21,5 +21,5 @@ urlpatterns = [
     url(r'^', include('twitter.urls')),
     url(r'^twitter/nltk_dir', include('twitter.urls')),
     url(r'^admin/', admin.site.urls),
-    url(r'^twitter/static/(?P<path>.*)$', 'django.views.static.serve', { 'document_root', setttings.STATIC_ROOT })
+    # url(r'^twitter/static/(?P<path>.*)$', 'django.views.static.serve', { 'document_root', setttings.STATIC_ROOT })
 ]
