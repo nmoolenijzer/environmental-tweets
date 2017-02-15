@@ -13,7 +13,7 @@ from django.http import HttpResponse
 def index(request):
 	# -you main code starts here-
 
-	nltk.data.path.append('./static/nltk_dir')
+	nltk.data.path.append('./static/twitter/nltk_dir')
 
 	labeled_pros_cons = []
 	for word in pros_cons.words('IntegratedPros.txt'):
