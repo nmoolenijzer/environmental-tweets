@@ -15,11 +15,12 @@ Including another URLconf
 """
 from django.conf.urls import include, url
 from django.contrib import admin
+import os
 
 urlpatterns = [
     url(r'^twitter/', include('twitter.urls')),
     url(r'^', include('twitter.urls')),
     url(r'^twitter/nltk_dir', include('twitter.urls')),
     url(r'^admin/', admin.site.urls),
-    # url(r'^twitter/static/(?P<path>.*)$', 'django.views.static.serve', { 'document_root', setttings.STATIC_ROOT })
+    url(r'^twitter/static/(?P<path>.*)$', 'django.views.static.serve', { 'document_root', os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'static') })
 ]
