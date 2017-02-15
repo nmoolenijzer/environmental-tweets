@@ -78,7 +78,7 @@ def index(request):
 
 	print(str(jsonObj['search_metadata']))
 
-	while ('next_results' in jsonObj['search_metadata'] and counter < 102):
+	while ('next_results' in jsonObj['search_metadata'] and counter < 100):
 		resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonObj['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
 
 		stringVal = content.decode("utf-8")
