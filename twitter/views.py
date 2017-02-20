@@ -20,9 +20,6 @@ dates = []
 sentiments = []
 
 def analyzeJSON(classifier, jsonResponse, items, counter):
-
-	nltk.data.path.append('./static/twitter/nltk_dir')
-	
 	for obj in jsonResponse['statuses']:
 		total = 0
 		tokens = nltk.word_tokenize(obj['full_text'])
@@ -74,7 +71,7 @@ def show_chart(request):
 	return response
 
 def index(request):
-	nltk.data.path.append('./static/twitter/nltk_dir')
+	nltk.data.path.append('/static/twitter/nltk_dir')
 
 	labeled_pros_cons = []
 	for word in pros_cons.words('IntegratedPros.txt'):
