@@ -40,7 +40,7 @@ def analyzeJSON(classifier, jsonResponse, items, counter):
 		avg = 0;
 		if len(words_to_analyze) != 0: avg = total/float(len(words_to_analyze))
 
-		items.append({ 'name': obj['user']['name'], 'text': obj['full_text'], 'avg': avg, 'count': counter })
+		items.append({ 'name': obj['user']['name'], 'text': obj['full_text'], 'avg': total, 'count': counter })
 
 		datetimeObj = parser.parse(obj['created_at'])
 		dates.append(datetimeObj)
@@ -52,9 +52,8 @@ def analyzeJSON(classifier, jsonResponse, items, counter):
 
 def show_chart(request):
 
-	figure = Figure()
+	figure = Figure(figsize=(12,7))
 	plt = figure.add_subplot(111)
-	figure.set_size_inches(12, 7)
 
 	plt.set_title("Sentiment Analysis of Tweets Containing @EPA")
 
@@ -67,6 +66,7 @@ def show_chart(request):
 
 	response = HttpResponse(content_type="image/png")
 	canvas.print_png(response)
+
 
 	return response
 
