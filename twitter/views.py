@@ -10,6 +10,7 @@ from nltk.corpus import pros_cons
 from django.shortcuts import render
 from django.http import HttpResponse
 import datetime
+import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.dates import DateFormatter
@@ -53,6 +54,9 @@ def analyzeJSON(classifier, jsonResponse, items, counter):
 def show_chart(request):
 
 	figure = Figure(figsize=(12,7))
+
+	# figure.clf()
+
 	plt = figure.add_subplot(111)
 
 	plt.set_title("Sentiment Analysis of Tweets Containing @EPA")
@@ -67,6 +71,7 @@ def show_chart(request):
 	response = HttpResponse(content_type="image/png")
 	canvas.print_png(response)
 
+	# plt.clear()
 
 	return response
 
