@@ -111,7 +111,7 @@ def index(request):
 
 	counter = analyzeJSON(classifier, jsonResponse, items, counter)
 
-	while ('next_results' in jsonResponse['search_metadata'] && counter < 102): # and counter < 102):
+	while ('next_results' in jsonResponse['search_metadata']): # and counter < 102):
 		resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonResponse['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
 
 		stringResponse = content.decode("utf-8")
