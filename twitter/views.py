@@ -16,6 +16,7 @@ from matplotlib.figure import Figure
 from matplotlib.dates import DateFormatter
 from django.urls import reverse
 from dateutil import parser
+import numpy as np
 
 dates = []
 sentiments = []
@@ -53,21 +54,25 @@ def analyzeJSON(classifier, jsonResponse, items, counter):
 
 def show_chart(request):
 
-	figure = Figure(figsize=(12,7))
+	figure = Figure(figsize=(20,7))
 
 	# figure.clf()
 
-	plt = figure.add_subplot(111)
+	plt = figure.add_subplot(121)
+
+	scat = figure.add_subplot(122)
 
 	plt.set_title("Sentiment Analysis of Tweets Containing @EPA")
+	scat.set_title("Sentiment Analysis of Tweets Containing @EPA")
 
 	plt.set_xlabel("Dates")
 	plt.set_ylabel("Sentiment")
+	scat.set_xlabel("Dates")
+	scat.set_ylabel("Sentiment")
 
+	plt.plot_date(dates, sentiments, '-', color="#031634", linewidth=1)
 
-	# plt.plot_date(dates, sentiments, '-', color="#031634", linewidth=1)
-
-	plt.scatter(dates, sentiments)
+	scat.scatter(dates, sentiments)
 
 	canvas = FigureCanvas(figure)
 
@@ -119,6 +124,7 @@ def index(request):
 
 		counter = analyzeJSON(classifier, jsonResponse, items, counter)
 
+
 	# image = (buffer.getValue(), "image/png")
     # print("\nConfidence can also be analyzed:")
     # print(nltk.classify.accuracy(classifier, tester));
@@ -126,4 +132,4 @@ def index(request):
     # print("\nAnd which training data is most important:")
     # print(classifier.show_most_informative_features(5));
 
-	return HttpResponse(render(request, 'index.html', {'items': items, 'image': reverse('show_chart')}, content_type='application/html'))
+	return HttpResponse(render(request, 'index.html', {'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}, content_type='application/html'))
