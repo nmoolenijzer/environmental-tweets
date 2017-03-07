@@ -56,8 +56,6 @@ def show_chart(request):
 
 	figure = Figure(figsize=(20,7))
 
-	# figure.clf()
-
 	plt = figure.add_subplot(121)
 
 	scat = figure.add_subplot(122)
@@ -67,19 +65,17 @@ def show_chart(request):
 
 	plt.set_xlabel("Dates")
 	plt.set_ylabel("Sentiment")
-	scat.set_xlabel("Dates")
+	scat.set_xlabel("Count")
 	scat.set_ylabel("Sentiment")
 
 	plt.plot_date(dates, sentiments, '-', color="#031634", linewidth=1)
 
-	scat.scatter(dates, sentiments)
+	scat.scatter(np.arange(len(sentiments)), sentiments)
 
 	canvas = FigureCanvas(figure)
 
 	response = HttpResponse(content_type="image/png")
 	canvas.print_png(response)
-
-	# plt.clear()
 
 	return response
 
@@ -106,7 +102,8 @@ def index(request):
 	consumer = oauth2.Consumer(key='eBa29YaUmi43aCmN9dDjKaTIN', secret='AZOkA4JVCgmE7NJURB3jQWjIQlG5aF6oQAfKX4JFwpncHYAjpP')
 	token = oauth2.Token(key='827224004347977735-cq8ZzwvQMZIMvPS8ANwZ5Cq8OS3rKvy', secret='bctJjCgxtqsfMcCToRvSzOOZBVRZeIwZkP1ij34y49qMR')
 	client = oauth2.Client(consumer, token)
-	resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json?q=%40EPA%20-filter%3Aretweets&result_type=recent&count=100&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
+	searchUrl = 'https://api.twitter.com/1.1/search/tweets.json?q=%40EPA%20-filter%3Aretweets&result_type=recent&count=100&tweet_mode=extended&exclude_replies=true'
+	resp, content = client.request(searchUrl, method="GET", body=b"", headers=None)
 
 	stringResponse = content.decode("utf-8")
 	jsonResponse = json.loads(stringResponse)
@@ -116,7 +113,7 @@ def index(request):
 
 	counter = analyzeJSON(classifier, jsonResponse, items, counter)
 
-	while ('next_results' in jsonResponse['search_metadata']): # and counter < 102):
+	while ('next_results' in jsonResponse['search_metadata'] and counter < 102):
 		resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonResponse['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
 
 		stringResponse = content.decode("utf-8")
