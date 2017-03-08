@@ -17,6 +17,7 @@ from matplotlib.dates import DateFormatter
 from django.urls import reverse
 from dateutil import parser
 import numpy as np
+import matplotlib.pyplot as pltr
 
 dates = []
 sentiments = []
@@ -54,23 +55,37 @@ def analyzeJSON(classifier, jsonResponse, items, counter):
 
 def show_chart(request):
 
+	matplotlib.use('agg')
+
 	figure = Figure(figsize=(20,7))
 
 	plt = figure.add_subplot(121)
 
-	scat = figure.add_subplot(122)
+	hist = figure.add_subplot(122)
 
 	plt.set_title("Sentiment Analysis of Tweets Containing @EPA")
-	scat.set_title("Sentiment Analysis of Tweets Containing @EPA")
+	hist.set_title("Sentiment Analysis of Tweets Containing @EPA")
 
 	plt.set_xlabel("Dates")
 	plt.set_ylabel("Sentiment")
-	scat.set_xlabel("Count")
-	scat.set_ylabel("Sentiment")
+	hist.set_xlabel("Count")
+	hist.set_ylabel("Sentiment")
 
 	plt.plot_date(dates, sentiments, '-', color="#031634", linewidth=1)
 
-	scat.scatter(np.arange(len(sentiments)), sentiments)
+	# bin_array=np.linspace(-100,100,100)
+	# my_histogram=[]
+	# for i in range(len(bin_array)-1):
+	# 	mask = (sentiments>=bin_array[i])&(sentiments<bin_array[i+1])
+	# 	npSent = np.array(sentiments)
+	# 	intSent = npSent.astype(int)
+	# 	length = len(intSent[mask])
+	# 	my_histogram.append(length)
+
+	# histo = np.histogram(np.array(sentiments), np.linspace(-100,100,100));
+	#
+	# hist.plot(histo)
+
 
 	canvas = FigureCanvas(figure)
 
