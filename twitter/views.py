@@ -54,7 +54,7 @@ def analyzeJSON(classifier, jsonResponse, items, counter):
 
 def show_chart(request):
 
-	figure = Figure(figsize=(20,7))
+	figure = Figure(figsize=(14,5))
 
 	plt = figure.add_subplot(121)
 
@@ -68,8 +68,8 @@ def show_chart(request):
 
 	hist.set_title("Sentiment Analysis of Tweets Containing @EPA")
 
-	hist.set_xlabel("Count")
-	hist.set_ylabel("Sentiment")
+	hist.set_xlabel("Sentiment")
+	hist.set_ylabel("Count")
 	hist.hist(sentiments, bins=(len(sentiments)/4))
 
 	canvas = FigureCanvas(figure)
