@@ -19,9 +19,10 @@ from dateutil import parser
 import numpy as np
 import plotly.offline as pltly
 import plotly.graph_objs as go
-from apscheduler.schedulers.blocking import BlockingScheduler
+import django_rq
 
-sched = BlockingScheduler()
+
+from worker_dyno import reload_graphs
 
 dates = []
 sentiments = []
@@ -96,11 +97,7 @@ def show_chart(request):
 
 	return response
 
-@sched.scheduled_job('interval', minutes=3)
-def printJob():
-	print("HERE")
-
-def index(request):
+def graphData(request):
 	nltk.data.path.append('./static/twitter/nltk_dir')
 
 	labeled_pros_cons = []
@@ -215,4 +212,14 @@ def index(request):
 	tsGraph = tsGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
 	tsGraph = tsGraph.replace('"showLink": true', '"showLink": false')
 
-	return HttpResponse(render(request, 'index.html', {'graph': graph, 'tzGraph': tzGraph, 'tsGraph': tsGraph, 'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}, content_type='application/html'))
+	data = {'graph': graph, 'tzGraph': tzGraph, 'tsGraph': tsGraph, 'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}
+	return HttpResponse(render(request, 'index.html', data, content_type='application/html'))
+
+def index(request):
+
+	result = django_rq.enqueue(graphData, request=request)
+
+	# scheduler = Scheduler(connection=Redis())
+	# scheduler.enqueue_in(timedelta(seconds=30), reload_graphs)
+
+	return HttpResponse(render(request, 'index.html', content_type='application/html'))
