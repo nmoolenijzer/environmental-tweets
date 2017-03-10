@@ -26,6 +26,7 @@ from worker_dyno import reload_graphs
 
 dates = []
 sentiments = []
+gRequest = None
 
 def analyzeJSON(classifier, jsonResponse, items, data, counter):
 	for obj in jsonResponse['statuses']:
@@ -97,7 +98,7 @@ def show_chart(request):
 
 	return response
 
-def graphData(request):
+def graphData():
 	nltk.data.path.append('./static/twitter/nltk_dir')
 
 	labeled_pros_cons = []
@@ -213,11 +214,14 @@ def graphData(request):
 	tsGraph = tsGraph.replace('"showLink": true', '"showLink": false')
 
 	data = {'graph': graph, 'tzGraph': tzGraph, 'tsGraph': tsGraph, 'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}
-	return HttpResponse(render(request, 'index.html', data, content_type='application/html'))
+	# return data;
+	return HttpResponse(render(gRequest, 'index.html', data, content_type='application/html'))
 
 def index(request):
 
-	result = django_rq.enqueue(graphData, request=request)
+	result = django_rq.enqueue(graphData)
+	gRequest = request;
+	print(result)
 
 	# scheduler = Scheduler(connection=Redis())
 	# scheduler.enqueue_in(timedelta(seconds=30), reload_graphs)
