@@ -17,11 +17,16 @@ from matplotlib.dates import DateFormatter
 from django.urls import reverse
 from dateutil import parser
 import numpy as np
+import plotly.offline as pltly
+import plotly.graph_objs as go
+from apscheduler.schedulers.blocking import BlockingScheduler
+
+sched = BlockingScheduler()
 
 dates = []
 sentiments = []
 
-def analyzeJSON(classifier, jsonResponse, items, counter):
+def analyzeJSON(classifier, jsonResponse, items, data, counter):
 	for obj in jsonResponse['statuses']:
 		total = 0
 		tokens = nltk.word_tokenize(obj['full_text'])
@@ -42,11 +47,23 @@ def analyzeJSON(classifier, jsonResponse, items, counter):
 		avg = 0;
 		if len(words_to_analyze) != 0: avg = total/float(len(words_to_analyze))
 
-		items.append({ 'name': obj['user']['name'], 'text': obj['full_text'], 'avg': total, 'count': counter })
+		items.append({ 'name': obj['user']['name'], 'text': obj['full_text'], 'avg': total, 'count': counter, 'tz': obj['user']['time_zone']})
+
+		if (not(obj['user']['time_zone'] in data['timezones'])):
+			data["timezones"][obj['user']['time_zone']] = 1
+		else:
+			data["timezones"][obj['user']['time_zone']] += 1
+
+		if (not(obj['user']['time_zone'] in data['timezones_sentiment'])):
+			data["timezones_sentiment"][obj['user']['time_zone']] = total
+		else:
+			data["timezones_sentiment"][obj['user']['time_zone']] += total
 
 		datetimeObj = parser.parse(obj['created_at'])
 		dates.append(datetimeObj)
 		sentiments.append(total)
+		for i in range(obj['retweet_count']):
+			data["retweets"].append(total)
 
 		counter += 1
 
@@ -79,6 +96,10 @@ def show_chart(request):
 
 	return response
 
+@sched.scheduled_job('interval', minutes=3)
+def printJob():
+	print("HERE")
+
 def index(request):
 	nltk.data.path.append('./static/twitter/nltk_dir')
 
@@ -110,16 +131,20 @@ def index(request):
 
 	counter = 1;
 	items = [];
+	data = {}
+	data["retweets"] = []
+	data["timezones"] = {}
+	data["timezones_sentiment"] = {}
 
-	counter = analyzeJSON(classifier, jsonResponse, items, counter)
+	counter = analyzeJSON(classifier, jsonResponse, items, data, counter)
 
-	while ('next_results' in jsonResponse['search_metadata'] and counter < 102):
+	while ('next_results' in jsonResponse['search_metadata']):
 		resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonResponse['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
 
 		stringResponse = content.decode("utf-8")
 		jsonResponse = json.loads(stringResponse)
 
-		counter = analyzeJSON(classifier, jsonResponse, items, counter)
+		counter = analyzeJSON(classifier, jsonResponse, items, data, counter)
 
 
 	# image = (buffer.getValue(), "image/png")
@@ -129,4 +154,65 @@ def index(request):
     # print("\nAnd which training data is most important:")
     # print(classifier.show_most_informative_features(5));
 
-	return HttpResponse(render(request, 'index.html', {'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}, content_type='application/html'))
+	if None in data["timezones"]: del data["timezones"][None]
+
+	pData = [go.Histogram(
+					x=sentiments,
+					opacity=0.75,
+					marker=dict(
+						color="#DB5461"
+					),
+					name='Tweets'
+			),
+			go.Histogram(
+					x=data["retweets"],
+					opacity=0.75,
+					marker=dict(
+						color="#8AA29E"
+					),
+					name='Retweets'
+			)]
+	layout = go.Layout(barmode='overlay', title='Sentiment Analysis of Tweets Containing @EPA',
+						xaxis=dict(
+							title='Sentiment'
+						),
+						yaxis=dict(
+							title='Count'
+						))
+	fig = go.Figure(data = pData, layout = layout)
+	graph = pltly.plot(fig, output_type='div')
+
+	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
+	graph = graph.replace('"showLink": true', '"showLink": false')
+
+	tData = [go.Pie(
+				labels=data["timezones"].keys(),
+				values=data["timezones"].values()
+			)]
+	tzLayout = go.Layout(title='Timezones of Tweets Containing @EPA')
+	tzFig = go.Figure(data = tData, layout = tzLayout)
+	tzGraph = pltly.plot(tzFig, output_type='div')
+
+	tzGraph = tzGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
+	tzGraph = tzGraph.replace('"showLink": true', '"showLink": false')
+
+	if None in data["timezones_sentiment"]: del data["timezones_sentiment"][None]
+
+	tsData = [go.Bar(
+				x=data["timezones_sentiment"].keys(),
+				y=data["timezones_sentiment"].values()
+			)]
+	tsLayout = go.Layout(title='Timezones of Tweets Containing @EPA',
+						xaxis=dict(
+							title='Timezone'
+						),
+						yaxis=dict(
+							title='Overall Sentiment'
+						))
+	tsFig = go.Figure(data = tsData, layout = tsLayout)
+	tsGraph = pltly.plot(tsFig, output_type='div')
+
+	tsGraph = tsGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
+	tsGraph = tsGraph.replace('"showLink": true', '"showLink": false')
+
+	return HttpResponse(render(request, 'index.html', {'graph': graph, 'tzGraph': tzGraph, 'tsGraph': tsGraph, 'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}, content_type='application/html'))
