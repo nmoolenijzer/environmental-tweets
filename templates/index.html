@@ -68,7 +68,7 @@
   <title>Environmental Tweets</title>
 </head>
 
-<body onload="tweets.style.display = 'none'; getStatus()">
+<body>
   <h1>Sentiment Analysis of Environmental Twitter Activity</h1>
   <div style="font-weight: 200; font-family: 'Raleway', sans-serif; color: #031634;">
       <br /><br />
@@ -80,29 +80,15 @@
 
 <script>
 
-var status = 'not started'
+getCharts()
 
 
-if (!location.href.includes("/update_charts")) {
-  window.setInterval(function() {
-    if (document.getElementById("dots").innerHTML == "...") document.getElementById("dots").innerHTML = ""
-    document.getElementById("dots").innerHTML += "."
-    document.getElementById("status").innerHTML = status;
-    if (status != "finished") {
-      getStatus()
-    }
-    else {
-      location.href = "/update_charts"
-    }
-  }, 1000);
-}
-
-
-function getStatus() {
+function getCharts() {
   var xmlHttp = new XMLHttpRequest();
   xmlHttp.onreadystatechange = function() {
     if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
       status = xmlHttp.responseText
+      location.href = "/update_charts"
     }
   }
   xmlHttp.open("GET", "/check_status", true);

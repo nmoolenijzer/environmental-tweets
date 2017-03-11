@@ -223,7 +223,10 @@ def check_status(request):
 	connection = django_rq.get_connection()
 	job = Job.fetch(request.session['job-id'], connection=connection)
 
-	return HttpResponse(job.status, content_type='text/plain')
+	while (job.status != "finished"):
+		time.sleep(0.1)
+
+	return HttpResponse(render(request, 'charts.html', job.result, content_type='application/html'))
 
 def update_charts(request):
 	connection = django_rq.get_connection()
