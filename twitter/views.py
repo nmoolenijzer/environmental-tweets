@@ -74,33 +74,6 @@ def analyzeJSON(classifier, jsonResponse, items, data, counter):
 
 	return counter
 
-def show_chart(request):
-
-	figure = Figure(figsize=(14,5))
-
-	plt = figure.add_subplot(121)
-
-	plt.set_title("Sentiment Analysis of Tweets Containing @EPA")
-
-	plt.set_xlabel("Dates")
-	plt.set_ylabel("Sentiment")
-	plt.plot_date(dates, sentiments, '-', color="#031634", linewidth=1)
-
-	hist = figure.add_subplot(122)
-
-	hist.set_title("Sentiment Analysis of Tweets Containing @EPA")
-
-	hist.set_xlabel("Sentiment")
-	hist.set_ylabel("Count")
-	hist.hist(sentiments, bins=(len(sentiments)/4))
-
-	canvas = FigureCanvas(figure)
-
-	response = HttpResponse(content_type="image/png")
-	canvas.print_png(response)
-
-	return response
-
 def graphData():
 	nltk.data.path.append('./static/twitter/nltk_dir')
 
@@ -215,15 +188,16 @@ def graphData():
 
 	tsGraph = tsGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
 	tsGraph = tsGraph.replace('"showLink": true', '"showLink": false')
-
-	data = {'graph': graph, 'tzGraph': tzGraph, 'tsGraph': tsGraph, 'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}
+	#'tzGraph': tzGraph, 'tsGraph': tsGraph, 
+	data = {'graph': graph, 'items': items, 'mean': np.mean(sentiments)}
 	return data;
 
 def check_status(request):
 	connection = django_rq.get_connection()
 	job = Job.fetch(request.session['job-id'], connection=connection)
 
-	while (job.status != "finished"):
+	while (job.status != "finished" and job.status != "failed"):
+		print(job.status)
 		time.sleep(0.1)
 
 	return HttpResponse(render(request, 'charts.html', job.result, content_type='application/html'))
