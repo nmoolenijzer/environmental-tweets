@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django_rq'
 ]
 
+
+
 RQ_QUEUES = {
     'default': {
         'HOST': 'localhost',

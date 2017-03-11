@@ -7,7 +7,7 @@ import random
 import nltk
 from nltk.corpus import names
 from nltk.corpus import pros_cons
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 import datetime
 import matplotlib
@@ -20,13 +20,18 @@ import numpy as np
 import plotly.offline as pltly
 import plotly.graph_objs as go
 import django_rq
-
+import time
+import logging
+from rq import Connection
+from rq.job import Job
+from redis import Redis
+from django.conf import settings
 
 from worker_dyno import reload_graphs
 
+data = {};
 dates = []
 sentiments = []
-gRequest = None
 
 def analyzeJSON(classifier, jsonResponse, items, data, counter):
 	for obj in jsonResponse['statuses']:
@@ -214,16 +219,24 @@ def graphData():
 	tsGraph = tsGraph.replace('"showLink": true', '"showLink": false')
 
 	data = {'graph': graph, 'tzGraph': tzGraph, 'tsGraph': tsGraph, 'items': items, 'image': reverse('show_chart'), 'mean': np.mean(sentiments)}
-	# return data;
-	return HttpResponse(render(gRequest, 'index.html', data, content_type='application/html'))
+	return data;
+
+def check_status(request):
+	connection = django_rq.get_connection()
+	job = Job.fetch(request.session['job-id'], connection=connection)
+
+	return HttpResponse(job.status, content_type='text/plain')
+
+def update_charts(request):
+	connection = django_rq.get_connection()
+	job = Job.fetch(request.session['job-id'], connection=connection)
+
+	return HttpResponse(render(request, 'index.html', job.result, content_type='application/html'))
 
 def index(request):
 
-	result = django_rq.enqueue(graphData)
-	gRequest = request;
-	print(result)
+	job = django_rq.enqueue(graphData)
+	request.session['job-id'] = job.id
 
-	# scheduler = Scheduler(connection=Redis())
-	# scheduler.enqueue_in(timedelta(seconds=30), reload_graphs)
 
-	return HttpResponse(render(request, 'index.html', content_type='application/html'))
+	return HttpResponse(render(request, 'index.html', job.result, content_type='application/html'))
