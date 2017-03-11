@@ -231,12 +231,11 @@ def update_charts(request):
 	connection = django_rq.get_connection()
 	job = Job.fetch(request.session['job-id'], connection=connection)
 
-	return HttpResponse(render(request, 'index.html', job.result, content_type='application/html'))
+	return HttpResponse(render(request, 'charts.html', job.result, content_type='application/html'))
 
 def index(request):
 
 	job = django_rq.enqueue(graphData)
 	request.session['job-id'] = job.id
 
-
-	return HttpResponse(render(request, 'index.html', job.result, content_type='application/html'))
+	return HttpResponse(render(request, 'index.html', content_type='application/html'))
