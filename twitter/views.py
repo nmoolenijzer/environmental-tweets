@@ -209,7 +209,6 @@ def check_status(request):
 	job = Job.fetch(request.session['job-id'], connection=connection)
 
 	while (job.status != "finished" and job.status != "failed"):
-		print(job.status)
 		time.sleep(0.1)
 
 	data = job.result
