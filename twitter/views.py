@@ -27,8 +27,6 @@ from rq.job import Job
 from redis import Redis
 from django.conf import settings
 
-from worker_dyno import reload_graphs
-
 data = {};
 dates = []
 sentiments = []

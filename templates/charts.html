@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css?family=Raleway:200" rel="stylesheet">
+  <style>
+    h1 {
+      font-weight: 200;
+      font-family: 'Raleway', sans-serif;
+      color: #031634;
+      text-align: center;
+    }
+
+    body {
+        width: 100%;
+        height: 100%;
+        color: #031634;
+        text-align: center;
+        /*margin-left: 50%;*/
+        /*background: -webkit-linear-gradient(135deg, #036564, #3B3C59);
+        background: -o-linear-gradient(135deg, #036564, #3B3C59);
+        background: -moz-linear-gradient(135deg, #036564, #3B3C59);
+        background: linear-gradient(135deg, #036564, #3B3C59);*/
+    }
+
+    table {
+      width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+      border-collapse: collapse;
+    }
+
+    td {
+      border: 1px solid #031634;
+      padding: 10px;
+    }
+
+    th {
+      color: white;
+      background-color: #031634;
+      border: 1px solid #031634;
+      padding: 10px;
+    }
+
+    .graph {
+      width: 60%;
+      margin: auto;
+      text-align: center;
+    }
+
+    .tweets {
+      display: none;
+    }
+
+    #tweetButton {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 16px;
+      font-family: 'Raleway', sans-serif;
+    }
+
+    #tweetButton:focus {
+      border: none;
+      outline: none;
+    }
+
+  </style>
+  <title>Environmental Tweets</title>
+</head>
+
+<body onload="tweets.style.display = 'none'; getStatus()">
+  <h1>Sentiment Analysis of Environmental Twitter Activity</h1>
+  <div style="font-weight: 200; font-family: 'Raleway', sans-serif; color: #031634;">
+    <!-- top: 0; left: 0; position: absolute; width: 100%; height: 100%"> -->
+    <div class="graph">
+      <a href='/'>reload data</a>
+      {{ graph|safe }}
+      {{ tzGraph|safe }}
+      {{ tsGraph|safe }}
+      Average Sentiment: {{ mean }}<br /><br />
+      <button id="tweetButton" onclick="showTweets()">Show Tweets</button>
+    </div>
+    <br />
+    <div class="tweets" id="tweets">
+      <table>
+        <tr><th>Count</th><th>User</th><th>Tweet</th><th>Sentiment</th><th>Timezone</th></tr>
+        {% for item in items %}
+            <tr><td>{{ item.count }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.text }}</td>
+            <td>{{ item.avg }}</td>
+            <td>{{ item.tz }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</body>
+
+<script>
+
+function showTweets() {
+  var tweets = document.getElementById('tweets');
+  console.log(tweets.style.display)
+  if (tweets.style.display == "none") {
+    tweets.style.display = "block";
+    document.getElementById('tweetButton').innerHTML = "Hide Tweets"
+  }
+  else {
+    tweets.style.display = "none";
+    document.getElementById('tweetButton').innerHTML = "Show Tweets"
+  }
+}
+</script>
