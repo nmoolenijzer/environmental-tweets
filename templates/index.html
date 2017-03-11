@@ -84,14 +84,15 @@ getCharts()
 
 
 function getCharts() {
-  var xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = function() {
-    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-      location.href = "/update_charts"
-    }
-  }
-  xmlHttp.open("GET", "/check_status", true);
-  xmlHttp.send(null);
+  location.href = "/check_status"
+  // var xmlHttp = new XMLHttpRequest();
+  // xmlHttp.onreadystatechange = function() {
+  //   if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+  //     location.href = "/update_charts"
+  //   }
+  // }
+  // xmlHttp.open("GET", "/check_status", true);
+  // xmlHttp.send(null);
 }
 
 

@@ -29,7 +29,6 @@ from django.conf import settings
 
 data = {};
 dates = []
-sentiments = []
 
 def analyzeJSON(classifier, jsonResponse, items, data, counter):
 	for obj in jsonResponse['statuses']:
@@ -66,7 +65,7 @@ def analyzeJSON(classifier, jsonResponse, items, data, counter):
 
 		datetimeObj = parser.parse(obj['created_at'])
 		dates.append(datetimeObj)
-		sentiments.append(total)
+		data["sentiments"].append(total)
 		for i in range(obj['retweet_count']):
 			data["retweets"].append(total)
 
@@ -74,7 +73,7 @@ def analyzeJSON(classifier, jsonResponse, items, data, counter):
 
 	return counter
 
-def graphData():
+def getTwitterData():
 	nltk.data.path.append('./static/twitter/nltk_dir')
 
 	labeled_pros_cons = []
@@ -103,9 +102,12 @@ def graphData():
 	stringResponse = content.decode("utf-8")
 	jsonResponse = json.loads(stringResponse)
 
-	counter = 1;
-	items = [];
+	counter = 1
+
 	data = {}
+	data["sentiments"] = []
+	data["items"] = []
+	items = data["items"]
 	data["retweets"] = []
 	data["timezones"] = {}
 	data["timezones_sentiment"] = {}
@@ -128,10 +130,12 @@ def graphData():
     # print("\nAnd which training data is most important:")
     # print(classifier.show_most_informative_features(5));
 
-	if None in data["timezones"]: del data["timezones"][None]
+	return data;
+
+def plotBaseData(data):
 
 	pData = [go.Histogram(
-					x=sentiments,
+					x=data["sentiments"],
 					opacity=0.75,
 					marker=dict(
 						color="#DB5461"
@@ -159,6 +163,11 @@ def graphData():
 	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
 	graph = graph.replace('"showLink": true', '"showLink": false')
 
+	return graph;
+
+def plotTzPie(data):
+	if None in data["timezones"]: del data["timezones"][None]
+
 	tData = [go.Pie(
 				labels=data["timezones"].keys(),
 				values=data["timezones"].values()
@@ -168,7 +177,11 @@ def graphData():
 	tzGraph = pltly.plot(tzFig, output_type='div')
 
 	tzGraph = tzGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
-	tzGraph = tzGraph.replace('"showLink": true', '"showLink": false')
+	graph = tzGraph.replace('"showLink": true', '"showLink": false')
+
+	return graph;
+
+def plotTzBar(data):
 
 	if None in data["timezones_sentiment"]: del data["timezones_sentiment"][None]
 
@@ -187,10 +200,9 @@ def graphData():
 	tsGraph = pltly.plot(tsFig, output_type='div')
 
 	tsGraph = tsGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
-	tsGraph = tsGraph.replace('"showLink": true', '"showLink": false')
-	#'tzGraph': tzGraph, 'tsGraph': tsGraph, 
-	data = {'graph': graph, 'items': items, 'mean': np.mean(sentiments)}
-	return data;
+	graph = tsGraph.replace('"showLink": true', '"showLink": false')
+
+	return graph;
 
 def check_status(request):
 	connection = django_rq.get_connection()
@@ -200,7 +212,12 @@ def check_status(request):
 		print(job.status)
 		time.sleep(0.1)
 
-	return HttpResponse(render(request, 'charts.html', job.result, content_type='application/html'))
+	data = job.result
+	items = data["items"]
+
+	data = {'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': items, 'mean': np.mean(data["sentiments"])}
+
+	return HttpResponse(render(request, 'charts.html', data, content_type='application/html'))
 
 def update_charts(request):
 	connection = django_rq.get_connection()
@@ -210,7 +227,9 @@ def update_charts(request):
 
 def index(request):
 
-	job = django_rq.enqueue(graphData)
+	graphType = request.GET.get("graph")
+
+	job = django_rq.enqueue(getTwitterData)
 	request.session['job-id'] = job.id
 
 	return HttpResponse(render(request, 'index.html', content_type='application/html'))
