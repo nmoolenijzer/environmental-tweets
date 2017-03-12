@@ -52,3 +52,9 @@ This web app was created by Nick Moolenijzer (nick@moolenijzer.com) - contact me
 
 ## APIs
 - [Twitter REST APIs](https://dev.twitter.com/rest/public) - allows for programmatic search of Twitter activity
+
+## Assets
+- [Google Material Icons](https://material.io/icons/) - icons for web use
+
+## License
+All of my written code is licensed under the MIT License open source license, but all libraries, data, and external resources may have their own licenses that must be followed.
