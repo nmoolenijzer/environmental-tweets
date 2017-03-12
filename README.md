@@ -82,7 +82,7 @@ Perkins, Jacob. "Python NLTK Demos for Natural Language Text Processing." Python
 
 Poole, David, and Alan Mackworth. "Artificial Intelligence." Artificial Intelligence - Foundations of Computational Agents -- 7.3.3 Bayesian Classifiers. N.p., 2010. Web. 30 Jan. 2017
 
-5. Categorizing and Tagging Words. (n.d.). Retrieved March 12, 2017, from http://www.nltk.org/book/ch05.html
+5 . Categorizing and Tagging Words. (n.d.). Retrieved March 12, 2017, from http://www.nltk.org/book/ch05.html
 
 Asynchronous tasks and jobs in Django with RQ | en.proft.me. (n.d.). Retrieved March 11, 2017, from http://en.proft.me/2016/10/4/asynchronous-tasks-and-jobs-django-rq/
 
