@@ -224,7 +224,7 @@ def getTwitterData(cap):
 	data["retweets"] = []
 	data["timezones"] = {}
 	data["timezones_sentiment"] = {}
-
+	data["cap"] = cap
 
 	#if twitter didn't return statuses, return error
 	if (not('search_metadata' in jsonResponse)):
@@ -471,10 +471,10 @@ def load_charts(request):
 
 		#if error, tell user
 		if ("error" in data):
-			pageData = {'error': data["error"], 'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
+			pageData = {'error': data["error"], 'cap': data["cap"], 'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
 		#otehrwise send nornal page data
 		else:
-			pageData = {'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
+			pageData = {'cap': data["cap"], 'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
 
 
 		#serve the charts page with data dictionary

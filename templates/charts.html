@@ -13,7 +13,7 @@
   <h1>Snapshot of Environmental Twitter Activity</h1>
   <!-- create sidebar -->
   <div style="text-align: left; position: fixed; color: black; top: 10px; left: 10px; font-family: 'Raleway', sans-serif;">
-    <a style='text-decoration: none; color: black' href='/?cap=500'><img style='vertical-align: middle; width: 30px;' src="{% static 'twitter/reload.png' %}"> reload</a><br /><br />
+    <a style='text-decoration: none; color: black; cursor: pointer' onclick='loadTweets()'><img style='vertical-align: middle; width: 30px;' src="{% static 'twitter/reload.png' %}"> reload</a> <input value='{{ cap }}' style="font-size: 16px; font-family: 'Raleway', sans-serif; width: 45px" type='text' id='tweet-count'> tweets<br /><br />
     <a style='text-decoration: none; color: black' href='/methods'><img style='vertical-align: middle; width: 30px;' src="{% static 'twitter/methods.png' %}"> methodology</a><br />
   </div>
 
@@ -61,4 +61,9 @@ function showTweets() {
     document.getElementById('tweetButton').innerHTML = "Show Tweets"
   }
 }
+
+function loadTweets() {
+  location.href = "/?cap=" + document.getElementById('tweet-count').value
+}
+
 </script>
