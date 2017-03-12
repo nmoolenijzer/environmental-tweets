@@ -44,32 +44,16 @@ REDIS_URL = os.getenv('REDISTOGO_URL', 'redis://localhost:6379/0');
 
 RQ_QUEUES = {
     'default': {
-        # 'HOST': 'localhost',
-        # 'PORT': 6379,
-        # 'DB': 0,
-        # 'PASSWORD': 'pass',
         'DEFAULT_TIMEOUT': 360,
         'URL': REDIS_URL
     },
     'high': {
-        # 'HOST': 'localhost',
-        # 'PORT': 6379,
-        # 'DB': 0,
-        # 'PASSWORD': 'pass',
         'DEFAULT_TIMEOUT': 360,
         'URL': REDIS_URL
-        # 'DEFAULT_TIMEOUT': 360,
     },
     'low': {
-        # 'HOST': 'localhost',
-        # 'PORT': 6379,
-        # 'DB': 0,
-        # 'PASSWORD': 'pass',
         'DEFAULT_TIMEOUT': 360,
         'URL': REDIS_URL
-        # 'HOST': 'localhost',
-        # 'PORT': 6379,
-        # 'DB': 0
     }
 }
 

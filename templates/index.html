@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <head>
+  <!--HEADER INFO FOR HTML DOC-->
   <meta charset="utf-8">
   <link href="https://fonts.googleapis.com/css?family=Raleway:200" rel="stylesheet">
+  <!--LOAD STATIC-->
   {% load static %}
   <link href="{% static 'twitter/style/style.css' %}" rel="stylesheet">
   <title>Environmental Tweets</title>
@@ -9,22 +11,39 @@
 
 <body onload="getCharts()">
   <div style="position: absolute; left: 50%; top: 50%; width: 400px; height: 300px; margin-left: -200px; margin-top: -150px; font-size: 30px; font-weight: 200; font-family: 'Raleway', sans-serif; color: #031634;">
-      Loading and analyzing Twitter data, please wait.<br />
-      <div style='display:inline-block' id='status'></div>
+      Loading and analyzing Twitter data, please wait.<br /><br />
+      <div style='font-size: 16px;'>Current status: <div style='display:inline-block' id='status'></div></div><br />
       <div style='font-size: 50px' id='dots'></div>
   </div>
 </body>
 
 <script>
 
+// inits the timer to get charts and check status - every 0.5 seconds, checks
 function getCharts() {
   window.setInterval(function() {
     if (document.getElementById("dots").innerHTML == "•••") document.getElementById("dots").innerHTML = ""
     document.getElementById("dots").innerHTML += "&bull;"
+    checkStatus()
   }, 500)
+}
 
-  location.href = "/load_charts"
+// checks status of job - makes GET request
+function checkStatus() {
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.onreadystatechange = function() {
+    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+      // gets status and updates status div
+      status = xmlHttp.responseText
+      document.getElementById("status").innerHTML = status
+      if (status == "started") document.getElementById("status").innerHTML += " (in progress)"
 
+      // if job is done, redirect
+      if (status == "finished" || status == "failed") location.href = "/load_charts"
+    }
+  }
+  xmlHttp.open("GET", "/check_status", true);
+  xmlHttp.send(null);
 }
 
 </script>

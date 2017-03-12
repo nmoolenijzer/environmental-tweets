@@ -58,6 +58,8 @@ from rq import Connection
 from rq.job import Job
 from redis import Redis
 
+connection = django_rq.get_connection()
+
 '''
 Function used to analyze the JSON response data from Twitter
 Params:
@@ -192,22 +194,29 @@ def getTwitterData():
 	#create classifier
 	classifier = createClassifier();
 
+	#Twitter consumer and token keys
 	consumerKey = 'eBa29YaUmi43aCmN9dDjKaTIN'
 	consumerToken = 'AZOkA4JVCgmE7NJURB3jQWjIQlG5aF6oQAfKX4JFwpncHYAjpP'
 	tokenKey = '827224004347977735-cq8ZzwvQMZIMvPS8ANwZ5Cq8OS3rKvy';
 	tokenSecret = 'bctJjCgxtqsfMcCToRvSzOOZBVRZeIwZkP1ij34y49qMR'
 
+	#create consumer/token/client with auth keys
 	consumer = oauth2.Consumer(key=consumerKey, secret=consumerToken)
 	token = oauth2.Token(key=tokenKey, secret=tokenSecret)
 	client = oauth2.Client(consumer, token)
+
+	#make twitter search API request
 	searchUrl = 'https://api.twitter.com/1.1/search/tweets.json?q=%40EPA%20-filter%3Aretweets&result_type=recent&count=100&tweet_mode=extended&exclude_replies=true'
 	resp, content = client.request(searchUrl, method="GET", body=b"", headers=None)
 
+	#decode and parse result
 	stringResponse = content.decode("utf-8")
 	jsonResponse = json.loads(stringResponse)
 
+	#start counter at 1
 	counter = 1
 
+	#create data dictionary with each necessary part
 	data = {}
 	data["sentiments"] = []
 	data["items"] = []
@@ -216,25 +225,52 @@ def getTwitterData():
 	data["timezones"] = {}
 	data["timezones_sentiment"] = {}
 
-	#if twitter didn't return statuses, return
-	if (not('statuses' in jsonResponse)):
+
+	#if twitter didn't return statuses, return error
+	if (not('search_metadata' in jsonResponse)):
+		print("--------------START ERROR--------------")
+		print("Maximum requests reached - try again in 15 minutes")
+		print("--------------END ERROR--------------")
+		sys.stdout.flush()
 		return {"Failed": "Twitter rate limites reached - wait 15 minutes and try again."}
-
-	counter = analyzeJSON(classifier, jsonResponse, data, counter)
-
-	while ('next_results' in jsonResponse['search_metadata']):
-		resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonResponse['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
-
-		stringResponse = content.decode("utf-8")
-		jsonResponse = json.loads(stringResponse)
-
+	#otherwise...
+	else:
+		#analyze first response
 		counter = analyzeJSON(classifier, jsonResponse, data, counter)
 
+		#while next results are available
+		while ('search_metadata' in jsonResponse and 'next_results' in jsonResponse['search_metadata']):
+			#get next response with new search URL
+			searchUrl = 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonResponse['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true'
+			resp, content = client.request(searchUrl, method="GET", body=b"", headers=None)
 
-	return data;
+			stringResponse = content.decode("utf-8")
+			jsonResponse = json.loads(stringResponse)
 
+			#analyze next batch
+			counter = analyzeJSON(classifier, jsonResponse, data, counter)
+
+		#if twitter didn't return statuses, return
+		if (not('search_metadata' in jsonResponse)):
+			print("--------------START ERROR--------------")
+			print("Twitter rate limites reached - wait 15 minutes and try again")
+			print("--------------END ERROR--------------")
+			sys.stdout.flush()
+			return {"Failed": "Twitter rate limites reached - wait 15 minutes and try again."}
+
+		return data;
+
+'''
+Function used to create base histogram
+Params:
+	data - analyzed data from Twitter search
+
+Returns:
+	graph - HTML for graph created by plotly
+
+'''
 def plotBaseData(data):
-
+	#set data for chart
 	data = [go.Histogram(
 					x=data["sentiments"],
 					opacity=0.75,
@@ -251,6 +287,7 @@ def plotBaseData(data):
 					),
 					name='Retweets'
 			)]
+	#set colors/fonts/titles for chart
 	layout = go.Layout(barmode='overlay', title='Sentiment Analysis of Tweets Containing @EPA',
 						titlefont=dict(
 							family='Raleway',
@@ -283,22 +320,37 @@ def plotBaseData(data):
 								color='#031634'
 							)
 						))
+	#create figure and graph
 	figure = go.Figure(data = data, layout = layout)
 	graph = pltly.plot(figure, output_type='div')
 
+	#remove mod bar and plotly link
 	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
 	graph = graph.replace('"showLink": true', '"showLink": false')
 
 	return graph;
 
+'''
+Function used to create time zone pie chart
+Params:
+	data - analyzed data from Twitter search
+
+Returns:
+	graph - HTML for graph created by plotly
+
+'''
 def plotTzPie(data):
+	#remove none type time zones
 	if None in data["timezones"]: del data["timezones"][None]
 
+	#set data for chart
 	data = [go.Pie(
 				labels=data["timezones"].keys(),
 				values=data["timezones"].values(),
 				textinfo='none'
 			)]
+
+	#set colors/fonts/titles for chart
 	layout = go.Layout(title='Timezones of Tweets Containing @EPA',
 						titlefont=dict(
 							family='Raleway',
@@ -310,21 +362,36 @@ def plotTzPie(data):
 							size=18,
 							color='#031634'
 						))
+	#create figure and graph
 	figure = go.Figure(data = data, layout = layout)
 	graph = pltly.plot(figure, output_type='div')
 
+	#remove mod bar and plotly link
 	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
 	graph = graph.replace('"showLink": true', '"showLink": false')
 
 	return graph;
 
+'''
+Function used to create time zone bar graph
+Params:
+	data - analyzed data from Twitter search
+
+Returns:
+	graph - HTML for graph created by plotly
+
+'''
 def plotTzBar(data):
+	#delete none type time zones
 	if None in data["timezones_sentiment"]: del data["timezones_sentiment"][None]
 
+	#get the data for bar chart
 	data = [go.Bar(
 				x=data["timezones_sentiment"].keys(),
 				y=data["timezones_sentiment"].values()
 			)]
+
+	#set colors/fonts/titles for chart
 	layout = go.Layout(title='Sentiment of Tweets Containing @EPA by Timezone',
 						titlefont=dict(
 							family='Raleway',
@@ -361,32 +428,47 @@ def plotTzBar(data):
 						margin=go.Margin(
 							b=200
 						))
+	#create figure and graph
 	figure = go.Figure(data = data, layout = layout)
 	graph = pltly.plot(figure, output_type='div')
-
+	#remove mod bar and plotly link
 	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
 	graph = graph.replace('"showLink": true', '"showLink": false')
 
 	return graph;
 
+'''
+Function used to load charts and data into web template
+Params:
+	request - GET request
+
+Returns:
+	HttpResponse - response to be served
+
+'''
 def load_charts(request):
 	try:
-		connection = django_rq.get_connection()
+		#get job and check status for fnish;failed - wait if is not
 		job = Job.fetch(request.session['job-id'], connection=connection)
 
 		while (job.status != "finished" and job.status != "failed"):
 			time.sleep(0.1)
 
+		#if failed, tell user something went wrong
 		if (job.status == "failed"):
 			return HttpResponse("Something went wrong - most likely Redis is full. Wait 30 seconds and try returning to the homepage.", content_type='text/plain')
 
+		#get the job data
 		data = job.result
 
+		#if failed, this means Twitter responded with error - tell user
 		if ("Failed" in data):
 			return HttpResponse(data["Failed"], content_type='text/plain')
 
+		#make data dictionary to pass to served page
 		data = {'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
 
+		#serve the charts page with data dictionary
 		return HttpResponse(render(request, 'charts.html', data, content_type='application/html'))
 
 	except Exception as e:
@@ -396,13 +478,54 @@ def load_charts(request):
 		sys.stdout.flush()
 		return redirect('/')
 
+'''
+Function used to check status of the current job
+Params:
+	request - GET request
 
+Returns:
+	job.status - status of the worker job
+
+'''
+def check_status(request):
+	try:
+		#get job id and check status - send to user
+		job = Job.fetch(request.session['job-id'], connection=connection)
+		return HttpResponse(job.status, content_type='text/plain')
+
+	except Exception as e:
+		print("--------------START ERROR--------------")
+		print(e)
+		print("--------------END ERROR--------------")
+		sys.stdout.flush()
+		return redirect('/')
+
+'''
+Function used to serve the methods page
+Params:
+	request - GET request
+
+Returns:
+	HttpResponse - response to be served
+
+'''
 def methods(request):
 	return HttpResponse(render(request, 'methods.html', content_type='application/html'))
 
+'''
+Function used to serve the index and start the worker
+Params:
+	request - GET request
+
+Returns:
+	HttpResponse - response to be served
+
+'''
 def index(request):
 	try:
-		job = django_rq.enqueue(getTwitterData, result_ttl=30)
+		#queue the worker to get Twitter data and analyze
+		job = django_rq.enqueue(getTwitterData, timeout=1200, result_ttl=30)
+		#store job id to ref later
 		request.session['job-id'] = job.id
 
 		return HttpResponse(render(request, 'index.html', content_type='application/html'))
