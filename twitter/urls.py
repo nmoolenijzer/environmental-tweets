@@ -1,9 +1,10 @@
 from django.conf.urls import url
 from . import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
 	url(r'^$', views.index, name='index'),
-	url(r'^update_charts/$', views.update_charts, name='update_charts'),
-	url(r'^check_status/$', views.check_status, name='check_status'),
-    # url(r'^static/(?P<path>.*)$', 'django.views.static.serve', { 'document_root', setttings.STATIC_ROOT })
-]
+	url(r'^load_charts/$', views.load_charts, name='load_charts'),
+	url(r'^methods/$', views.methods, name='methods'),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

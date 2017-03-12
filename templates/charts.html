@@ -2,83 +2,25 @@
 <head>
   <meta charset="utf-8">
   <link href="https://fonts.googleapis.com/css?family=Raleway:200" rel="stylesheet">
-  <style>
-    h1 {
-      font-weight: 200;
-      font-family: 'Raleway', sans-serif;
-      color: #031634;
-      text-align: center;
-    }
-
-    body {
-        width: 100%;
-        height: 100%;
-        color: #031634;
-        text-align: center;
-        /*margin-left: 50%;*/
-        /*background: -webkit-linear-gradient(135deg, #036564, #3B3C59);
-        background: -o-linear-gradient(135deg, #036564, #3B3C59);
-        background: -moz-linear-gradient(135deg, #036564, #3B3C59);
-        background: linear-gradient(135deg, #036564, #3B3C59);*/
-    }
-
-    table {
-      width: 90%;
-      margin-left: auto;
-      margin-right: auto;
-      border-collapse: collapse;
-    }
-
-    td {
-      border: 1px solid #031634;
-      padding: 10px;
-    }
-
-    th {
-      color: white;
-      background-color: #031634;
-      border: 1px solid #031634;
-      padding: 10px;
-    }
-
-    .graph {
-      width: 60%;
-      margin: auto;
-      text-align: center;
-    }
-
-    .tweets {
-      display: none;
-    }
-
-    #tweetButton {
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 16px;
-      font-family: 'Raleway', sans-serif;
-    }
-
-    #tweetButton:focus {
-      border: none;
-      outline: none;
-    }
-
-  </style>
+  {% load static %}
+  <link href="{% static 'twitter/style/style.css' %}" rel="stylesheet">
   <title>Environmental Tweets</title>
 </head>
 
 <body onload="tweets.style.display = 'none';">
-  <h1>Sentiment Analysis of Environmental Twitter Activity</h1>
+  <h1>Snapshot of Environmental Twitter Activity</h1>
+  <div style="text-align: left; position: fixed; color: black; top: 10px; left: 10px; font-family: 'Raleway', sans-serif;">
+    <a style='text-decoration: none; color: black' href='/'><img style='vertical-align: middle; width: 30px;' src="{% static 'twitter/reload.png' %}"> reload</a><br /><br />
+    <a style='text-decoration: none; color: black' href='/methods'><img style='vertical-align: middle; width: 30px;' src="{% static 'twitter/methods.png' %}"> methodology</a><br />
+  </div>
   <div style="font-weight: 200; font-family: 'Raleway', sans-serif; color: #031634;">
-    <!-- top: 0; left: 0; position: absolute; width: 100%; height: 100%"> -->
     <div class="graph">
-      <a href='/'>reload data</a>
       {{ graph|safe }}
       {{ tzGraph|safe }}
       {{ tsGraph|safe }}
       <br /><br />
       Average Sentiment: {{ mean }}<br /><br />
+      Median Sentiment: {{ median }}<br /><br />
       <button id="tweetButton" onclick="showTweets()">Show Tweets</button>
     </div>
     <br />

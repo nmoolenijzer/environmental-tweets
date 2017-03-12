@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css?family=Raleway:200" rel="stylesheet">
+  {% load static %}
+  <link href="{% static 'twitter/style/style.css' %}" rel="stylesheet">
+  <title>Environmental Tweets</title>
+</head>
+
+<body>
+  <h1>Methodology</h1>
+  <div style="text-align: left; position: fixed; color: black; top: 10px; left: 10px; font-family: 'Raleway', sans-serif;">
+    <a style='text-decoration: none; color: black' href='/load_charts'><img style='vertical-align: middle; width: 30px;' src="{% static 'twitter/back.png' %}"> back</a><br /><br />
+  </div>
+  <div class='methods'>
+    <h2>Twitter Data</h2>
+    Twitter data comes directly from the <a style='color: black' href='https://dev.twitter.com/rest/public'>Twitter REST APIs</a>, which provides
+    limited access to Twitter search feeds, personal feeds, among other capabilities. To utilize the Twitter APIs, I first authorize using the <a style='color: black' href='https://github.com/joestump/python-oauth2'>Python OAuth library</a> and the consumer and token keys provided in my Twitter developer dashboard. I then create a oauth client and make a GET request to Twitter's search API, utilizing the following search URL: <br /><br /><code>https://api.twitter.com/1.1/search/tweets.json?q=%40EPA%20-filter%3Aretweets&result_type=recent&count=100&tweet_mode=extended&exclude_replies=true</code>
+    <br /><br />
+    Once I get the results from the GET request, I convert them from a stringified JSON object into an actual Python JSON object so that I can easily iterate through statues and other data provided by the Twitter APIs. After parsing the data, I simply perform the sentiment analysis described below on the tweets and then display them on the site.
+    <br /><br />
+    Why a snapshot of Twitter data, rather than over a longer period of time? Primarily I am focusing on the short timeframe because of limitations with Twitter's REST APIs, but I also think that there are advantages to looking at current sentiment.
+    For instance, after a particularly noteworthy cut or piece of legislation, users can visit the page to see what the current atttitude toward the EPA is, and they can see how it changes live.
+    <br />
+    <br />
+    <br />
+    <br />
+    <h2>Sentiment Analysis</h2>
+    Analysis relies on the <a style='color: black' href='https://www.nltk.org/'>Natural Language Toolkit</a> Naive Bayes' Classifier, which takes a training set and then
+    can be applied to large data sets to analyze sentiment. My algorithm first uses the pros_cons dataset from the NLTK corpora to create a classifier, by associating words in good reviews with a positive reaction and associating words in poor reviews with negative reactions. I then use the Twitter REST API (explained above) to get as many recent tweets as possible with the tag "@EPA" as Twitter will allow me to gather, and I run sentiment analysis on each tweet. To perform the sentiment analysis, I tokenize each tweet and first check for tagged words (i.e. other users' handles) and remove them from my data. Then, I loop through the remaining words and classify them and get an initial score by finding the probability that the classification is correct (thereby weighting neutral words less than polarizing words). Once I get an initial score for a word, I check if it's an adjective or adverb, in which case I weigh the score 20x more than if it is not (since adjectives and adverbs tend to carry much more descriptive weight than other words). I tally the total for each tweet by simply adding the score for each word in the tweet together. Additionally, I weigh retweets by checking the number of retweets for the current tweet and then adding the tweets total sentiment that many times to the running list of retweet sentiment values, thereby strongly weighting the totals of high-retweet tweets.
+    <br /><br />
+    Next, to analzye timezone data, I first just add the current tweet's timezone to the running tally of timezones. Then I incorporate sentiment into the timezone data by adding the current tweets total sentiment to the running tally of that timezone's overall sentiment.
+    <br /><br />
+    My data training relies on a pro/con dataset in the NLTK corpora with the following attribution:<br />
+    "Pros and cons dataset by Bing Liu [<a  style='color: black' href="http://www.cs.uic.edu/~liub">http://www.cs.uic.edu/~liub</a>] is licensed under
+    CC BY 4.0 International [<a style='color: black'  href="http://creativecommons.org/licenses/by/4.0/">http://creativecommons.org/licenses/by/4.0/</a>]"
+    <br />
+    <br />
+    <br />
+    <br />
+    <h2>Plotting</h2>
+    To plot the data, I use <a style='color: black' href="https://plot.ly/">plotly</a> to create bar charts, historgrams, and pie charts. These graphs are straight forward to make and can be served easily through Django. There is extensive documentation on the plotly website about how to create graphs and customize them similarly to how I customized mine
+  </div>
+</body>

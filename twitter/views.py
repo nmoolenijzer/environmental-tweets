@@ -26,6 +26,7 @@ from rq import Connection
 from rq.job import Job
 from redis import Redis
 from django.conf import settings
+import sys
 
 data = {};
 dates = []
@@ -74,6 +75,7 @@ def analyzeJSON(classifier, jsonResponse, items, data, counter):
 	return counter
 
 def getTwitterData():
+
 	nltk.data.path.append('./static/twitter/nltk_dir')
 
 	labeled_pros_cons = []
@@ -89,12 +91,15 @@ def getTwitterData():
 	for (word, pro_con) in labeled_pros_cons:
 		features.append(({'word': word}, pro_con))
 
-	trainer = features[10000:]
-	tester = features[:10000]
 	classifier = nltk.NaiveBayesClassifier.train(features)
 
-	consumer = oauth2.Consumer(key='eBa29YaUmi43aCmN9dDjKaTIN', secret='AZOkA4JVCgmE7NJURB3jQWjIQlG5aF6oQAfKX4JFwpncHYAjpP')
-	token = oauth2.Token(key='827224004347977735-cq8ZzwvQMZIMvPS8ANwZ5Cq8OS3rKvy', secret='bctJjCgxtqsfMcCToRvSzOOZBVRZeIwZkP1ij34y49qMR')
+	consumerKey = 'eBa29YaUmi43aCmN9dDjKaTIN'
+	consumerToken = 'AZOkA4JVCgmE7NJURB3jQWjIQlG5aF6oQAfKX4JFwpncHYAjpP'
+	tokenKey = '827224004347977735-cq8ZzwvQMZIMvPS8ANwZ5Cq8OS3rKvy';
+	tokenSecret = 'bctJjCgxtqsfMcCToRvSzOOZBVRZeIwZkP1ij34y49qMR'
+
+	consumer = oauth2.Consumer(key=consumerKey, secret=consumerToken)
+	token = oauth2.Token(key=tokenKey, secret=tokenSecret)
 	client = oauth2.Client(consumer, token)
 	searchUrl = 'https://api.twitter.com/1.1/search/tweets.json?q=%40EPA%20-filter%3Aretweets&result_type=recent&count=100&tweet_mode=extended&exclude_replies=true'
 	resp, content = client.request(searchUrl, method="GET", body=b"", headers=None)
@@ -107,12 +112,11 @@ def getTwitterData():
 	data = {}
 	data["sentiments"] = []
 	data["items"] = []
-	items = data["items"]
 	data["retweets"] = []
 	data["timezones"] = {}
 	data["timezones_sentiment"] = {}
 
-	counter = analyzeJSON(classifier, jsonResponse, items, data, counter)
+	counter = analyzeJSON(classifier, jsonResponse, data["items"], data, counter)
 
 	while ('next_results' in jsonResponse['search_metadata']):
 		resp, content = client.request( 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonResponse['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true', method="GET", body=b"", headers=None )
@@ -120,21 +124,14 @@ def getTwitterData():
 		stringResponse = content.decode("utf-8")
 		jsonResponse = json.loads(stringResponse)
 
-		counter = analyzeJSON(classifier, jsonResponse, items, data, counter)
+		counter = analyzeJSON(classifier, jsonResponse, data["items"], data, counter)
 
-
-	# image = (buffer.getValue(), "image/png")
-    # print("\nConfidence can also be analyzed:")
-    # print(nltk.classify.accuracy(classifier, tester));
-	#
-    # print("\nAnd which training data is most important:")
-    # print(classifier.show_most_informative_features(5));
 
 	return data;
 
 def plotBaseData(data):
 
-	pData = [go.Histogram(
+	data = [go.Histogram(
 					x=data["sentiments"],
 					opacity=0.75,
 					marker=dict(
@@ -151,14 +148,39 @@ def plotBaseData(data):
 					name='Retweets'
 			)]
 	layout = go.Layout(barmode='overlay', title='Sentiment Analysis of Tweets Containing @EPA',
+						titlefont=dict(
+							family='Raleway',
+							size=18,
+							color='#031634'
+						),
 						xaxis=dict(
-							title='Sentiment'
+							title='Sentiment',
+							titlefont=dict(
+								family='Raleway',
+								size=18,
+								color='#031634'
+							),
+							tickfont=dict(
+								family='Raleway',
+								size=12,
+								color='#031634'
+							)
 						),
 						yaxis=dict(
-							title='Count'
+							title='Count',
+							titlefont=dict(
+								family='Raleway',
+								size=18,
+								color='#031634'
+							),
+							tickfont=dict(
+								family='Raleway',
+								size=12,
+								color='#031634'
+							)
 						))
-	fig = go.Figure(data = pData, layout = layout)
-	graph = pltly.plot(fig, output_type='div')
+	figure = go.Figure(data = data, layout = layout)
+	graph = pltly.plot(figure, output_type='div')
 
 	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
 	graph = graph.replace('"showLink": true', '"showLink": false')
@@ -168,67 +190,119 @@ def plotBaseData(data):
 def plotTzPie(data):
 	if None in data["timezones"]: del data["timezones"][None]
 
-	tData = [go.Pie(
+	data = [go.Pie(
 				labels=data["timezones"].keys(),
-				values=data["timezones"].values()
+				values=data["timezones"].values(),
+				textinfo='none'
 			)]
-	tzLayout = go.Layout(title='Timezones of Tweets Containing @EPA')
-	tzFig = go.Figure(data = tData, layout = tzLayout)
-	tzGraph = pltly.plot(tzFig, output_type='div')
+	layout = go.Layout(title='Timezones of Tweets Containing @EPA',
+						titlefont=dict(
+							family='Raleway',
+							size=18,
+							color='#031634'
+						),
+						font=dict(
+							family='Raleway',
+							size=18,
+							color='#031634'
+						))
+	figure = go.Figure(data = data, layout = layout)
+	graph = pltly.plot(figure, output_type='div')
 
-	tzGraph = tzGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
-	graph = tzGraph.replace('"showLink": true', '"showLink": false')
+	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
+	graph = graph.replace('"showLink": true', '"showLink": false')
 
 	return graph;
 
 def plotTzBar(data):
-
 	if None in data["timezones_sentiment"]: del data["timezones_sentiment"][None]
 
-	tsData = [go.Bar(
+	data = [go.Bar(
 				x=data["timezones_sentiment"].keys(),
 				y=data["timezones_sentiment"].values()
 			)]
-	tsLayout = go.Layout(title='Timezones of Tweets Containing @EPA',
+	layout = go.Layout(title='Sentiment of Tweets Containing @EPA by Timezone',
+						titlefont=dict(
+							family='Raleway',
+							size=18,
+							color='#031634'
+						),
 						xaxis=dict(
-							title='Timezone'
+							title='Timezone',
+							titlefont=dict(
+								family='Raleway',
+								size=18,
+								color='#031634'
+							),
+							tickfont=dict(
+								family='Raleway',
+								size=12,
+								color='#031634'
+							)
 						),
 						yaxis=dict(
-							title='Overall Sentiment'
+							title='Overall Sentiment',
+							titlefont=dict(
+								family='Raleway',
+								size=18,
+								color='#031634'
+							),
+							tickfont=dict(
+								family='Raleway',
+								size=12,
+								color='#031634'
+							)
+						),
+						height=600,
+						margin=go.Margin(
+							b=200
 						))
-	tsFig = go.Figure(data = tsData, layout = tsLayout)
-	tsGraph = pltly.plot(tsFig, output_type='div')
+	figure = go.Figure(data = data, layout = layout)
+	graph = pltly.plot(figure, output_type='div')
 
-	tsGraph = tsGraph.replace('displayModeBar:"hover"', 'displayModeBar:false')
-	graph = tsGraph.replace('"showLink": true', '"showLink": false')
+	graph = graph.replace('displayModeBar:"hover"', 'displayModeBar:false')
+	graph = graph.replace('"showLink": true', '"showLink": false')
 
 	return graph;
 
-def check_status(request):
-	connection = django_rq.get_connection()
-	job = Job.fetch(request.session['job-id'], connection=connection)
+def load_charts(request):
+	try:
+		connection = django_rq.get_connection()
+		job = Job.fetch(request.session['job-id'], connection=connection)
 
-	while (job.status != "finished" and job.status != "failed"):
-		time.sleep(0.1)
+		while (job.status != "finished" and job.status != "failed"):
+			time.sleep(0.1)
 
-	data = job.result
-	items = data["items"]
+		if (job.status == "failed"):
+			return HttpResponse("Something went wrong - try refreshing.", content_type='text/plain')
 
-	data = {'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': items, 'mean': np.mean(data["sentiments"])}
+		data = job.result
 
-	return HttpResponse(render(request, 'charts.html', data, content_type='application/html'))
+		data = {'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
 
-def update_charts(request):
-	connection = django_rq.get_connection()
-	job = Job.fetch(request.session['job-id'], connection=connection)
+		return HttpResponse(render(request, 'charts.html', data, content_type='application/html'))
 
-	return HttpResponse(render(request, 'charts.html', job.result, content_type='application/html'))
+	except Exception as e:
+		print("--------------ERROR")
+		print(e)
+		print("--------------ERROR")
+		sys.stdout.flush()
+		return redirect('/')
+
+
+def methods(request):
+	return HttpResponse(render(request, 'methods.html', content_type='application/html'))
 
 def index(request):
+	try:
+		job = django_rq.enqueue(getTwitterData)
+		request.session['job-id'] = job.id
 
-	graphType = request.GET.get("graph")
+		return HttpResponse(render(request, 'index.html', content_type='application/html'))
 
-	job = django_rq.enqueue(getTwitterData)
-	request.session['job-id'] = job.id
-
-	return HttpResponse(render(request, 'index.html', content_type='application/html'))
+	except Exception as e:
+		print("--------------ERROR")
+		print(e)
+		print("--------------ERROR")
+		sys.stdout.flush()
+		return HttpResponse("Too many requests - try again in a few seconds.", content_type='text/plain')

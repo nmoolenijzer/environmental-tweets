@@ -2,73 +2,12 @@
 <head>
   <meta charset="utf-8">
   <link href="https://fonts.googleapis.com/css?family=Raleway:200" rel="stylesheet">
-  <style>
-    h1 {
-      font-weight: 200;
-      font-family: 'Raleway', sans-serif;
-      color: #031634;
-      text-align: center;
-    }
-
-    body {
-        width: 100%;
-        height: 100%;
-        color: #031634;
-        text-align: center;
-        /*margin-left: 50%;*/
-        /*background: -webkit-linear-gradient(135deg, #036564, #3B3C59);
-        background: -o-linear-gradient(135deg, #036564, #3B3C59);
-        background: -moz-linear-gradient(135deg, #036564, #3B3C59);
-        background: linear-gradient(135deg, #036564, #3B3C59);*/
-    }
-
-    table {
-      width: 90%;
-      margin-left: auto;
-      margin-right: auto;
-      border-collapse: collapse;
-    }
-
-    td {
-      border: 1px solid #031634;
-      padding: 10px;
-    }
-
-    th {
-      color: white;
-      background-color: #031634;
-      border: 1px solid #031634;
-      padding: 10px;
-    }
-
-    .graph {
-      width: 60%;
-      margin: auto;
-      text-align: center;
-    }
-
-    .tweets {
-      display: none;
-    }
-
-    #tweetButton {
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 16px;
-      font-family: 'Raleway', sans-serif;
-    }
-
-    #tweetButton:focus {
-      border: none;
-      outline: none;
-    }
-
-  </style>
+  {% load static %}
+  <link href="{% static 'twitter/style/style.css' %}" rel="stylesheet">
   <title>Environmental Tweets</title>
 </head>
 
-<body>
+<body onload="getCharts()">
   <div style="position: absolute; left: 50%; top: 50%; width: 400px; height: 300px; margin-left: -200px; margin-top: -150px; font-size: 30px; font-weight: 200; font-family: 'Raleway', sans-serif; color: #031634;">
       Loading and analyzing Twitter data, please wait.<br />
       <div style='display:inline-block' id='status'></div>
@@ -78,23 +17,15 @@
 
 <script>
 
-getCharts()
-
-window.setInterval(function() {
-  if (document.getElementById("dots").innerHTML == "•••") document.getElementById("dots").innerHTML = ""
-  document.getElementById("dots").innerHTML += "&bull;"
-}, 500)
 
 function getCharts() {
-  location.href = "/check_status"
-  // var xmlHttp = new XMLHttpRequest();
-  // xmlHttp.onreadystatechange = function() {
-  //   if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-  //     location.href = "/update_charts"
-  //   }
-  // }
-  // xmlHttp.open("GET", "/check_status", true);
-  // xmlHttp.send(null);
+  window.setInterval(function() {
+    if (document.getElementById("dots").innerHTML == "•••") document.getElementById("dots").innerHTML = ""
+    document.getElementById("dots").innerHTML += "&bull;"
+  }, 500)
+
+  location.href = "/load_charts"
+
 }
 
 
