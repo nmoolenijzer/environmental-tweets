@@ -28,9 +28,9 @@ data = {};
 dates = []
 
 def analyzeJSON(classifier, jsonResponse, items, data, counter):
-	for obj in jsonResponse['statuses']:
+	for tweet in jsonResponse['statuses']:
 		total = 0
-		tokens = nltk.word_tokenize(obj['full_text'])
+		tokens = nltk.word_tokenize(tweet['full_text'])
 		pos = nltk.pos_tag(tokens)
 		words_to_analyze = []
 		for (word, tag) in pos:
@@ -48,22 +48,24 @@ def analyzeJSON(classifier, jsonResponse, items, data, counter):
 		avg = 0;
 		if len(words_to_analyze) != 0: avg = total/float(len(words_to_analyze))
 
-		items.append({ 'name': obj['user']['name'], 'text': obj['full_text'], 'avg': total, 'count': counter, 'tz': obj['user']['time_zone']})
+		timeZone = tweet['user']['time_zone']
 
-		if (not(obj['user']['time_zone'] in data['timezones'])):
-			data["timezones"][obj['user']['time_zone']] = 1
+		items.append({ 'name': tweet['user']['name'], 'text': tweet['full_text'], 'avg': total, 'count': counter, 'tz': timeZone})
+
+		if (not(timeZone in data['timezones'])):
+			data["timezones"][timeZone] = 1
 		else:
-			data["timezones"][obj['user']['time_zone']] += 1
+			data["timezones"][timeZone] += 1
 
-		if (not(obj['user']['time_zone'] in data['timezones_sentiment'])):
-			data["timezones_sentiment"][obj['user']['time_zone']] = total
+		if (not(timeZone in data['timezones_sentiment'])):
+			data["timezones_sentiment"][timeZone] = total
 		else:
-			data["timezones_sentiment"][obj['user']['time_zone']] += total
+			data["timezones_sentiment"][timeZone] += total
 
-		datetimeObj = parser.parse(obj['created_at'])
-		dates.append(datetimeObj)
+		datetimetweet = parser.parse(tweet['created_at'])
+		dates.append(datetimetweet)
 		data["sentiments"].append(total)
-		for i in range(obj['retweet_count']):
+		for i in range(tweet['retweet_count']):
 			data["retweets"].append(total)
 
 		counter += 1
