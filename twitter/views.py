@@ -190,7 +190,7 @@ Returns:
 	data - all of the parsed JSON data returned by Twitter API call
 
 '''
-def getTwitterData():
+def getTwitterData(cap):
 	#create classifier
 	classifier = createClassifier();
 
@@ -230,16 +230,17 @@ def getTwitterData():
 	if (not('search_metadata' in jsonResponse)):
 		print("--------------START ERROR--------------")
 		print("Maximum requests reached - try again in 15 minutes")
+		print(jsonResponse)
 		print("--------------END ERROR--------------")
 		sys.stdout.flush()
-		return {"Failed": "Twitter rate limites reached - wait 15 minutes and try again."}
+		return {"failed": "Twitter rate limites reached - wait 15 minutes and try again"}
 	#otherwise...
 	else:
 		#analyze first response
 		counter = analyzeJSON(classifier, jsonResponse, data, counter)
 
 		#while next results are available
-		while ('search_metadata' in jsonResponse and 'next_results' in jsonResponse['search_metadata']):
+		while ('search_metadata' in jsonResponse and 'next_results' in jsonResponse['search_metadata'] and counter <= cap):
 			#get next response with new search URL
 			searchUrl = 'https://api.twitter.com/1.1/search/tweets.json' + str(jsonResponse['search_metadata']['next_results']) + '&tweet_mode=extended&exclude_replies=true'
 			resp, content = client.request(searchUrl, method="GET", body=b"", headers=None)
@@ -254,9 +255,12 @@ def getTwitterData():
 		if (not('search_metadata' in jsonResponse)):
 			print("--------------START ERROR--------------")
 			print("Twitter rate limites reached - wait 15 minutes and try again")
+			print(jsonResponse)
 			print("--------------END ERROR--------------")
 			sys.stdout.flush()
-			return {"Failed": "Twitter rate limites reached - wait 15 minutes and try again."}
+			#still have some results - return those
+			data["error"] = "Twitter rate limites were reached - there may be incomplete data"
+			return data
 
 		return data;
 
@@ -462,14 +466,19 @@ def load_charts(request):
 		data = job.result
 
 		#if failed, this means Twitter responded with error - tell user
-		if ("Failed" in data):
-			return HttpResponse(data["Failed"], content_type='text/plain')
+		if ("failed" in data):
+			return HttpResponse(data["failed"], content_type='text/plain')
 
-		#make data dictionary to pass to served page
-		data = {'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
+		#if error, tell user
+		if ("error" in data):
+			pageData = {'error': data["error"], 'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
+		#otehrwise send nornal page data
+		else:
+			pageData = {'graph': plotBaseData(data), 'tzGraph':plotTzPie(data), 'tsGraph':plotTzBar(data), 'items': data["items"], 'median': np.median(data["sentiments"]), 'mean': np.mean(data["sentiments"])}
+
 
 		#serve the charts page with data dictionary
-		return HttpResponse(render(request, 'charts.html', data, content_type='application/html'))
+		return HttpResponse(render(request, 'charts.html', pageData, content_type='application/html'))
 
 	except Exception as e:
 		print("--------------START ERROR--------------")
@@ -523,8 +532,15 @@ Returns:
 '''
 def index(request):
 	try:
+		try:
+			#get tweet cap
+			cap = int(request.GET.get("cap"))
+		except Exception as e:
+			#set tweet cap as default
+			cap = 500
+
 		#queue the worker to get Twitter data and analyze
-		job = django_rq.enqueue(getTwitterData, timeout=1200, result_ttl=30)
+		job = django_rq.enqueue(getTwitterData, cap, timeout=600, result_ttl=30)
 		#store job id to ref later
 		request.session['job-id'] = job.id
 

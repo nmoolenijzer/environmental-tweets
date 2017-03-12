@@ -2,6 +2,8 @@
 ## Overview
 Visit the website here: [environmental-twitter.herokuapp.com](https://environmental-twitter.herokuapp.com/)
 
+The default tweet cap is set at 500 tweets so that the Twitter rate limit doesn't quickly block using the website. If you would like to increase the cap, add "?cap=500" to the end of the index page URL if it's not already there and then change the number after "cap=" to a higher number (must be multiple of 100). Twitter may still return fewer tweets if there aren't enough available or if the rate limit is reached. Increase the cap at your own risk.
+
 ## Background
 Since the inauguration of Donald Trump as the 45th President of the United States, the EPA has faced severe funding cuts and deregulation. One of the biggest centers of community response has been on Twitter, where many users have expressed their outrage - and some their praise - over the recent changes to environmental protection in the US. To capture this well of public opinion, I poll Twitter data and perform sentiment analysis on it in order to better understand how the public feels about the EPA at a given time. The site does not track or store data over long periods, but rather looks at a quick snapshot of Twitter activity that is captured on every page load. I do not argue that this provides context long term trend analysis, but rather that it allows users to get insight into how the public feels about the EPA in the instant that they load the site.
 
