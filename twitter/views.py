@@ -1,6 +1,31 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#------------------------------------------------------------------------------
+__author__ = 'Nick Moolenijzer'
+__contact__ = 'nicolaas.b.moolenijzer.17@dartmouth.edu'
+__copyright__ = '(c) Nick Moolenijzer 2017'
+__license__ = 'MIT'
+__date__ = 'Thu Feb  2 14:02:12 2017'
+__status__ = "initial release"
+__url__ = "___"
+
+"""
+Name:           views.py
+Compatibility:  Python 3.5
+Description:    This program handles all the views and twitter analysis for the Django app
+
+Requires:       oauth2, json, random, nltk, dateutil, numpy, plotly, rq, django-rq
+
+AUTHOR:         Nick Moolenijzer
+ORGANIZATION:   Dartmouth College
+Contact:        nicolaas.b.moolenijzer.17@dartmouth.edu
+Copyright:      (c) Nick Moolenijzer 2017
+
+"""
 #------------------------------------------------------------------------------
 # Imports
 #   -all library/module imports go here-
+#auth lib for get requests
 import oauth2
 import json
 import random
@@ -24,26 +49,29 @@ from redis import Redis
 from django.conf import settings
 import sys
 
-data = {};
-dates = []
-
 def analyzeJSON(classifier, jsonResponse, items, data, counter):
+	#for each tweet in the Twitter response
 	for tweet in jsonResponse['statuses']:
+		#init total as 0
 		total = 0
+		#tokenize the tweet
 		tokens = nltk.word_tokenize(tweet['full_text'])
+		#get the parts of speech from the tokens
 		pos = nltk.pos_tag(tokens)
+		#init empty data set to analyze
 		words_to_analyze = []
+		#for each
 		for (word, tag) in pos:
-			if not("@" in tag):
-				words_to_analyze.append(word)
-		for word in words_to_analyze:
+			if not("@" in word):
+				words_to_analyze.append((word, tag))
+		for (word, tag) in words_to_analyze:
 			classification = classifier.classify({ 'word': word })
 			score = classifier.prob_classify({ 'word': word }).prob(classification)
 			if (classification == "pro"):
-				if ("JJ" in word or "RB" in word): total += (score*100)
+				if ("JJ" in tag or "RB" in tag): total += (score*100)
 				else: total += (score*5)
 			else:
-				if ("JJ" in word or "RB" in word): total -= (score*100)
+				if ("JJ" in tag or "RB" in tag): total -= (score*100)
 				else: total -= (score*5)
 		avg = 0;
 		if len(words_to_analyze) != 0: avg = total/float(len(words_to_analyze))
@@ -63,7 +91,7 @@ def analyzeJSON(classifier, jsonResponse, items, data, counter):
 			data["timezones_sentiment"][timeZone] += total
 
 		datetimetweet = parser.parse(tweet['created_at'])
-		dates.append(datetimetweet)
+		data["dates"].append(datetimetweet)
 		data["sentiments"].append(total)
 		for i in range(tweet['retweet_count']):
 			data["retweets"].append(total)
@@ -110,6 +138,7 @@ def getTwitterData():
 	data = {}
 	data["sentiments"] = []
 	data["items"] = []
+	data["dates"] = []
 	data["retweets"] = []
 	data["timezones"] = {}
 	data["timezones_sentiment"] = {}

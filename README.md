@@ -23,12 +23,13 @@ The input for the analysis is a JSON object that is returned by the Twitter REST
 The data that I plot is broken into the following segments:
 - data["sentiments"] - the sentiment total of each tweet
 - data["items"] - the raw tweet data (e.g. username, text, etc.)
+- data["dates"] - the dates of each tweet
 - data["retweets"] - the sentiment totals weighted by retweet count (see methodology above)
 - data["timezones"] - the count of tweets from each timezone
 - data["timezones_sentiment"] - the overall sentiment at each timezone
 
 ## Display of Data
-Finally, I display the data using two histograms (sentiment count from tweets themselves, and sentiment count from retweets), a pie chart (timezone distribution), and a bar chart (the overall sentiment from each timezone)
+I display the data using two histograms (sentiment count from tweets themselves, and sentiment count from retweets), a pie chart (timezone distribution), and a bar chart (the overall sentiment from each timezone)
 
 ## Deploying
 To deploy the website, I simply push updated files to this repo, which automatically deploys to Heroku. If the app crashes, let me know and I can restart the dynos.

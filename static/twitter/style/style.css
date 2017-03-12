@@ -16,11 +16,6 @@ body {
     height: 100%;
     color: #031634;
     text-align: center;
-    /*margin-left: 50%;*/
-    /*background: -webkit-linear-gradient(135deg, #036564, #3B3C59);
-    background: -o-linear-gradient(135deg, #036564, #3B3C59);
-    background: -moz-linear-gradient(135deg, #036564, #3B3C59);
-    background: linear-gradient(135deg, #036564, #3B3C59);*/
 }
 
 table {
@@ -58,6 +53,9 @@ th {
 }
 
 .tweets {
+  width: 75%;
+  margin-left: auto;
+  margin-right: auto;
   display: none;
 }
 
