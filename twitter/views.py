@@ -10,10 +10,6 @@ from nltk.corpus import pros_cons
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 import datetime
-import matplotlib
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-from matplotlib.dates import DateFormatter
 from django.urls import reverse
 from dateutil import parser
 import numpy as np
